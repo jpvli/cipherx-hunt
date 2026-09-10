@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case File FIN-014 — Internal Hunt</title>
+<style>
+  :root{
+    --bg:#10141A;
+    --panel:#171C24;
+    --panel-2:#1D232C;
+    --line:#2A313D;
+    --text:#E7EAEE;
+    --muted:#8993A3;
+    --amber:#E0A24B;
+    --amber-dim:#5A4326;
+    --teal:#4FB0A5;
+    --teal-dim:#1F3B37;
+    --red:#D9614F;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Roboto Mono", monospace;
+    --sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);padding:28px;min-height:100vh;}
+  .wrap{max-width:1220px;margin:0 auto;}
+
+  header{
+    border-bottom:1px solid var(--line);
+    padding-bottom:18px;margin-bottom:22px;
+    display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px;
+  }
+  header .id{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:0.02em;}
+  header h1{font-size:22px;font-weight:600;margin:4px 0 0 0;}
+  header .right{display:flex;align-items:center;gap:12px;}
+  header .progress{font-family:var(--mono);font-size:12px;color:var(--muted);}
+  header .status{
+    font-family:var(--mono);font-size:12px;color:var(--amber);
+    border:1px solid var(--amber-dim);background:rgba(224,162,75,0.08);
+    padding:5px 10px;border-radius:3px;
+  }
+  header .status.closed{color:var(--teal);border-color:var(--teal-dim);background:rgba(79,176,165,0.1);}
+  .resetbtn{
+    font-family:var(--mono);font-size:11px;color:var(--muted);
+    background:transparent;border:1px solid var(--line);padding:5px 9px;border-radius:3px;cursor:pointer;
+  }
+  .resetbtn:hover{color:var(--text);border-color:var(--muted);}
+
+  .layout{display:grid;grid-template-columns:380px 1fr;gap:22px;align-items:start;}
+  @media (max-width:900px){.layout{grid-template-columns:1fr;}}
+
+  .phase-head{
+    font-family:var(--mono);font-size:11px;color:var(--muted);
+    text-transform:none;margin:18px 0 8px 2px;
+  }
+  .phase-head:first-child{margin-top:0;}
+
+  .stepper{display:flex;flex-direction:column;gap:8px;}
+  .step{border:1px solid var(--line);background:var(--panel);border-radius:4px;padding:12px 14px;transition:border-color .2s ease, background .2s ease;}
+  .step.locked{opacity:0.4;}
+  .step.active{border-color:var(--amber-dim);background:var(--panel-2);}
+  .step.done{border-color:var(--teal-dim);}
+  .step-top{display:flex;align-items:center;gap:9px;margin-bottom:2px;}
+  .step-num{font-family:var(--mono);font-size:11px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);color:var(--muted);flex-shrink:0;}
+  .step.active .step-num{border-color:var(--amber);color:var(--amber);}
+  .step.done .step-num{border-color:var(--teal);color:var(--teal);background:rgba(79,176,165,0.12);}
+  .step-label{font-size:13px;font-weight:600;}
+  .step-answer{font-family:var(--mono);font-size:12px;color:var(--teal);margin:6px 0 0 29px;word-break:break-all;}
+
+  .qpanel{margin-top:8px;}
+  .qpanel p{font-size:13.5px;line-height:1.5;color:var(--text);margin:0 0 12px 0;}
+  .inputrow{display:flex;gap:8px;}
+  input[type=text]{flex:1;background:var(--bg);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 10px;border-radius:3px;}
+  input[type=text]:focus{outline:none;border-color:var(--amber);}
+  button{font-family:var(--sans);font-size:13px;font-weight:600;padding:9px 14px;border-radius:3px;border:1px solid var(--amber-dim);background:var(--amber);color:#1A1305;cursor:pointer;}
+  button:hover{filter:brightness(1.08);}
+  .hintbtn{background:transparent;border:1px solid var(--line);color:var(--muted);font-weight:500;font-size:12px;margin-top:8px;padding:5px 10px;}
+  .hintbtn:hover{color:var(--text);border-color:var(--muted);}
+  .hint{font-size:12.5px;color:var(--muted);border-left:2px solid var(--amber-dim);padding:8px 10px;margin-top:8px;background:rgba(224,162,75,0.05);display:none;}
+  .reveal{font-size:11.5px;color:var(--amber);cursor:pointer;text-decoration:underline;display:inline-block;margin-top:6px;}
+  .feedback{font-size:12.5px;margin-top:8px;display:none;}
+  .feedback.wrong{color:var(--red);}
+  .feedback.right{color:var(--teal);}
+
+  .resolution{border:1px solid var(--teal-dim);background:rgba(79,176,165,0.06);border-radius:4px;padding:18px;margin-top:4px;}
+  .resolution h3{margin:0 0 10px 0;font-size:14px;color:var(--teal);}
+  .chain{font-family:var(--mono);font-size:11.5px;color:var(--text);line-height:1.85;margin:0 0 12px 0;}
+  .resolution p{font-size:13px;line-height:1.6;color:var(--muted);margin:0;}
+
+  .tablewrap{border:1px solid var(--line);background:var(--panel);border-radius:4px;overflow:hidden;position:sticky;top:20px;}
+  .tabletop{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);gap:10px;flex-wrap:wrap;}
+  .tabletop .lbl{font-size:12px;color:var(--muted);font-family:var(--mono);}
+  .search{background:var(--bg);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12.5px;padding:7px 10px;border-radius:3px;width:220px;}
+  .search:focus{outline:none;border-color:var(--amber);}
+  .tablescroll{max-height:640px;overflow:auto;}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;}
+  th{position:sticky;top:0;background:var(--panel-2);text-align:left;padding:9px 10px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap;}
+  td{padding:7px 10px;border-bottom:1px solid rgba(42,49,61,0.6);color:var(--text);white-space:nowrap;}
+  tr:hover td{background:rgba(255,255,255,0.02);}
+  .hash-cell{color:var(--amber);}
+  .dim{color:var(--muted);}
+  .empty-row td{color:var(--muted);text-align:center;padding:20px;font-family:var(--sans);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="id">CASE FILE · OPENED 08:01</div>
+      <h1>Internal Hunt — unidentified lead</h1>
+    </div>
+    <div class="right">
+      <span class="progress" id="progress">0 / 12 confirmed</span>
+      <button class="resetbtn" onclick="resetCase()">Reset case file</button>
+      <div class="status" id="statusBadge">INVESTIGATION OPEN</div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div id="stepper"></div>
+
+    <div class="tablewrap">
+      <div class="tabletop">
+        <span class="lbl">INTERNAL TELEMETRY — <span id="rowCount"></span> EVENTS</span>
+        <input class="search" id="search" type="text" placeholder="search host, process, destination…">
+      </div>
+      <div class="tablescroll">
+        <table id="dataTable">
+          <thead>
+            <tr><th>Time</th><th>Host</th><th>User</th><th>Event</th><th>Process</th><th>Detail</th><th>Destination</th><th>SHA256</th></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Real, publicly-indexed sample (MalwareBazaar / abuse.ch), tagged LummaStealer.
+// Safe to paste into VirusTotal or ANY.RUN for lookup — do not download or run the file itself.
+const HASH = "a61525f9b5b24572111616ac596ccde037ec91fb8225c21acdfd8b96c3892554";
+
+const rows = [
+// FIN-WKS-014 — patient zero
+["08:01","FIN-WKS-014","j.papas","Logon","-","Interactive logon","-","-"],
+["08:03","FIN-WKS-014","j.papas","Process","explorer.exe -> outlook.exe","Normal startup","-","-"],
+["08:10","FIN-WKS-014","j.papas","Process","explorer.exe -> teams.exe","Normal startup","teams.microsoft.com","-"],
+["08:14","FIN-WKS-014","j.papas","File open","winword.exe","Opened Q3_invoice.docm (email attachment)","-","-"],
+["08:14","FIN-WKS-014","j.papas","Process","winword.exe -> powershell.exe","-enc JAB3AGMAPQBOAGUAdw...","-",HASH],
+["08:14","FIN-WKS-014","j.papas","Network","powershell.exe","Outbound HTTPS","cdn-update-check.net","-"],
+["08:16","FIN-WKS-014","j.papas","Process","explorer.exe -> chrome.exe","Normal browsing","sharepoint.com","-"],
+["08:20","FIN-WKS-014","j.papas","Process","powershell.exe -> schtasks.exe","New task \"WinUpdateCheck\"","-","-"],
+["08:21","FIN-WKS-014","SYSTEM","Scheduled task","schtasks.exe","Task runs powershell.exe daily at 09:00","-","-"],
+["09:00","FIN-WKS-014","SYSTEM","Process","svchost.exe -> powershell.exe","Scheduled task fired","-","-"],
+["09:00","FIN-WKS-014","SYSTEM","Network","powershell.exe","Outbound HTTPS","cdn-update-check.net","-"],
+["09:32","FIN-WKS-014","SYSTEM","Process","services.exe -> svchost.exe","Routine update check","update.microsoft.com","-"],
+["10:05","FIN-WKS-014","j.papas","Process","explorer.exe -> onedrive.exe","Sync","onedrive.com","-"],
+["10:40","FIN-WKS-014","SYSTEM","Process","rundll32.exe -> comsvcs.exe","MiniDump of lsass.exe memory","-","-"],
+["10:41","FIN-WKS-014","SYSTEM","File write","comsvcs.exe","Wrote dump file to C:\\Windows\\Temp\\dmp2A1.tmp","-","-"],
+["10:55","FIN-WKS-014","SYSTEM","Logon (network)","svc-backup","Outbound authenticated session using svc-backup credentials","-","-"],
+["11:40","FIN-WKS-014","j.papas","Process","explorer.exe -> outlook.exe","Normal email activity","-","-"],
+["13:15","FIN-WKS-014","j.papas","Process","explorer.exe -> chrome.exe","Normal browsing","m365.cloud.microsoft","-"],
+["14:02","FIN-WKS-014","SYSTEM","Network","powershell.exe","Outbound HTTPS (short beacon)","cdn-update-check.net","-"],
+["15:47","FIN-WKS-014","j.papas","Process","explorer.exe -> notepad.exe","Normal","-","-"],
+["16:58","FIN-WKS-014","j.papas","Logoff","-","-","-","-"],
+
+// ACC-WKS-007 — clean noise + legit PsExec decoy
+["08:05","ACC-WKS-007","m.dimou","Logon","-","Interactive logon","-","-"],
+["08:07","ACC-WKS-007","m.dimou","Process","explorer.exe -> outlook.exe","Normal startup","-","-"],
+["08:15","ACC-WKS-007","m.dimou","File open","excel.exe","Opened Budget_Q3.xlsx","-","-"],
+["09:00","ACC-WKS-007","m.dimou","Process","excel.exe","Normal editing","-","-"],
+["09:45","ACC-WKS-007","m.dimou","Process","explorer.exe -> chrome.exe","Normal browsing","erp.company.local","-"],
+["10:00","ACC-WKS-007","it-admin","Logon (network)","-","Remote session from IT-JUMP-01, ticket #5502","-","-"],
+["10:01","ACC-WKS-007","it-admin","Process","services.exe -> psexesvc.exe","Scheduled patch deployment (approved change)","-","-"],
+["10:02","ACC-WKS-007","it-admin","Process","psexesvc.exe -> msiexec.exe","Installing security update KB5031234","-","-"],
+["10:30","ACC-WKS-007","m.dimou","Process","spoolsv.exe","Print job","-","-"],
+["11:00","ACC-WKS-007","m.dimou","Process","explorer.exe -> teams.exe","Normal","teams.microsoft.com","-"],
+["12:15","ACC-WKS-007","m.dimou","Process","outlook.exe","Normal email activity","-","-"],
+["13:00","ACC-WKS-007","m.dimou","Process","explorer.exe -> sap_client.exe","Normal","sap.company.local","-"],
+["14:20","ACC-WKS-007","m.dimou","Process","chrome.exe","Normal browsing","linkedin.com","-"],
+["15:00","ACC-WKS-007","m.dimou","File save","excel.exe","Saved Budget_Q3.xlsx","-","-"],
+["16:10","ACC-WKS-007","m.dimou","Process","explorer.exe -> onedrive.exe","Sync","onedrive.com","-"],
+["16:45","ACC-WKS-007","m.dimou","Logoff","-","-","-","-"],
+
+// HR-WKS-002 — clean noise + red herring
+["08:10","HR-WKS-002","k.nikou","Logon","-","Interactive logon","-","-"],
+["08:12","HR-WKS-002","k.nikou","Process","explorer.exe -> outlook.exe","Normal startup","-","-"],
+["08:30","HR-WKS-002","k.nikou","Process","explorer.exe -> chrome.exe","Normal browsing","workday.com","-"],
+["09:15","HR-WKS-002","k.nikou","Process","explorer.exe -> teamviewer.exe","Remote session, IT ticket #4471 (planned)","-","-"],
+["09:16","HR-WKS-002","k.nikou","Network","teamviewer.exe","Outbound session","teamviewer.com","-"],
+["09:40","HR-WKS-002","k.nikou","Process","outlook.exe","Normal email activity","-","-"],
+["10:50","HR-WKS-002","k.nikou","File open","winword.exe","Opened Employee_Handbook.docx","-","-"],
+["11:30","HR-WKS-002","k.nikou","Process","chrome.exe","Normal browsing","linkedin.com","-"],
+["13:00","HR-WKS-002","k.nikou","Process","explorer.exe -> teams.exe","Normal","teams.microsoft.com","-"],
+["14:15","HR-WKS-002","k.nikou","Process","outlook.exe","Normal email activity","-","-"],
+["15:30","HR-WKS-002","k.nikou","Process","chrome.exe","Normal browsing","workday.com","-"],
+["16:20","HR-WKS-002","k.nikou","Process","explorer.exe -> onedrive.exe","Sync","onedrive.com","-"],
+["17:00","HR-WKS-002","k.nikou","Logoff","-","-","-","-"],
+
+// HQ-FILESVR-01 — lateral movement target
+["07:55","HQ-FILESVR-01","SYSTEM","Scheduled task","backup_agent.exe","Nightly backup job completed","-","-"],
+["08:30","HQ-FILESVR-01","m.dimou","File access","explorer.exe","Accessed \\Finance\\Q3_Reports\\ (own department)","-","-"],
+["09:10","HQ-FILESVR-01","k.nikou","File access","explorer.exe","Accessed \\HR\\Policies\\","-","-"],
+["09:50","HQ-FILESVR-01","SYSTEM","Process","services.exe -> vssadmin.exe","Routine shadow copy maintenance","-","-"],
+["10:15","HQ-FILESVR-01","g.antoniou","File access","explorer.exe","Accessed \\Legal\\Contracts\\","-","-"],
+["11:02","HQ-FILESVR-01","svc-backup","Logon (network)","-","Network logon originating from FIN-WKS-014","-","-"],
+["11:03","HQ-FILESVR-01","svc-backup","Process","services.exe -> psexesvc.exe","PsExec service installed remotely","-","-"],
+["11:04","HQ-FILESVR-01","svc-backup","Process","psexesvc.exe -> cmd.exe","Remote command execution","-","-"],
+["11:10","HQ-FILESVR-01","svc-backup","File access","cmd.exe","Accessed \\Finance\\Q3_Reports\\ share","-","-"],
+["11:15","HQ-FILESVR-01","svc-backup","Process","cmd.exe -> powershell.exe","Compress-Archive -> Finance_Q3_Archive.zip","-","-"],
+["11:20","HQ-FILESVR-01","svc-backup","Network","powershell.exe","Outbound HTTPS","files-sync-backup.net","-"],
+["11:22","HQ-FILESVR-01","svc-backup","Logoff","-","-","-","-"],
+["12:00","HQ-FILESVR-01","SYSTEM","Scheduled task","backup_agent.exe","Midday incremental backup","-","-"],
+];
+
+function A(...vals){ return vals; }
+
+const steps = [
+  {phase:"Phase 1 — Initial Access", key:"host",
+   label:"Which hostname was the entry point?",
+   prompt:"Across all four hosts, one shows a document opening and immediately spawning a scripting engine. Which host is it?",
+   hint:"Search the Event column for a 'File open' followed right after by a suspicious 'Process' event on the same host.",
+   answer:A("fin-wks-014"), placeholder:"e.g. FIN-WKS-014"},
+
+  {phase:"Phase 1 — Initial Access", key:"entryfile",
+   label:"What was the entry file?",
+   prompt:"On that host, which file did the user open right before the suspicious process appeared?",
+   hint:"It's the 'File open' row immediately before the process spawn.",
+   answer:A("q3_invoice.docm"), placeholder:"e.g. filename.docm"},
+
+  {phase:"Phase 2 — Execution", key:"process",
+   label:"Which process is out of place?",
+   prompt:"Which process did that file spawn — one it should never launch on its own?",
+   hint:"An Office app spawning a scripting/command-line interpreter is a classic execution technique.",
+   answer:A("powershell.exe","powershell"), placeholder:"e.g. powershell.exe"},
+
+  {phase:"Phase 2 — Execution", key:"hash",
+   label:"What's the SHA256 tied to it?",
+   prompt:"Copy the hash value from that same row. This is a real, publicly-indexed sample — paste it into VirusTotal or ANY.RUN to see what comes back. Don't download or run the actual file, just look up the hash.",
+   hint:"Only one row in the whole table has a SHA256 value filled in.",
+   answer:A(HASH), placeholder:"64-character hash"},
+
+  {phase:"Phase 3 — C2 & Persistence", key:"c2",
+   label:"Where does it call out to?",
+   prompt:"That process beacons out repeatedly during the day. What's the destination?",
+   hint:"It appears three separate times, always the same value, only on the compromised host.",
+   answer:A("cdn-update-check.net"), placeholder:"e.g. example.com"},
+
+  {phase:"Phase 3 — C2 & Persistence", key:"persist",
+   label:"How did it survive a reboot?",
+   prompt:"The attacker set up a mechanism to keep running. What's the name of the scheduled task?",
+   hint:"Look for a schtasks.exe event shortly after the first beacon.",
+   answer:A("winupdatecheck"), placeholder:"task name"},
+
+  {phase:"Phase 4 — Credential Access", key:"creddump",
+   label:"How were credentials harvested?",
+   prompt:"Later that morning, a built-in Windows DLL is abused to dump a sensitive process's memory. Which process performed the dump?",
+   hint:"Search for 'lsass.exe' — the technique abuses a legitimate rundll32 export, not an external hacking tool.",
+   answer:A("comsvcs.exe","rundll32.exe comsvcs.exe","comsvcs.dll"), placeholder:"process name"},
+
+  {phase:"Phase 4 — Credential Access", key:"account",
+   label:"Which account got compromised?",
+   prompt:"Shortly after, a new authenticated session appears using a different account than the logged-in user. Which account?",
+   hint:"Check the row right after the memory dump — it's a service account, not a person's name.",
+   answer:A("svc-backup"), placeholder:"account name"},
+
+  {phase:"Phase 5 — Lateral Movement", key:"target",
+   label:"Where did the attacker move next?",
+   prompt:"That account is used to log into a different machine entirely. Which host?",
+   hint:"Search the whole table for that account name outside FIN-WKS-014.",
+   answer:A("hq-filesvr-01"), placeholder:"hostname"},
+
+  {phase:"Phase 5 — Lateral Movement", key:"tool",
+   label:"How did they get code running there?",
+   prompt:"On the new host, which tool was used to remotely execute commands?",
+   hint:"It's the same class of tool as a legitimate IT patch job elsewhere in the table — but look at who's using it, and from where.",
+   answer:A("psexesvc.exe","psexec","psexec.exe"), placeholder:"tool / process name"},
+
+  {phase:"Phase 6 — Exfiltration", key:"staged",
+   label:"What did they package up?",
+   prompt:"Before leaving, the attacker compressed sensitive files into an archive. What's the filename?",
+   hint:"Look for a Compress-Archive command on the file server.",
+   answer:A("finance_q3_archive.zip"), placeholder:"filename.zip"},
+
+  {phase:"Phase 6 — Exfiltration", key:"exfil",
+   label:"Where did it go?",
+   prompt:"The archive leaves the network. What's the destination?",
+   hint:"It's a different domain from the original C2 — check the last Network event on the file server.",
+   answer:A("files-sync-backup.net"), placeholder:"e.g. example.com"},
+];
+
+let solved = new Array(steps.length).fill(false);
+
+function normalize(s){
+  return String(s).trim().toLowerCase().replace(/^https?:\/\//,"").replace(/\/$/,"");
+}
+function matches(input, answers){
+  const n = normalize(input);
+  return answers.some(a => normalize(a) === n);
+}
+
+function renderStepper(){
+  const el = document.getElementById('stepper');
+  el.innerHTML = "";
+  let lastPhase = null;
+
+  steps.forEach((s,i)=>{
+    if(s.phase !== lastPhase){
+      const h = document.createElement('div');
+      h.className = "phase-head";
+      h.textContent = s.phase;
+      el.appendChild(h);
+      lastPhase = s.phase;
+    }
+
+    const isDone = solved[i];
+    const isActive = !isDone && (i===0 || solved[i-1]);
+
+    const div = document.createElement('div');
+    div.className = "step " + (isDone?"done":isActive?"active":"locked");
+
+    let inner = `<div class="step-top">
+        <div class="step-num">${isDone?"✓":i+1}</div>
+        <div class="step-label">${s.label}</div>
+      </div>`;
+
+    if(isDone){
+      inner += `<div class="step-answer">${s.userAnswer}</div>`;
+    } else if(isActive){
+      inner += `<div class="qpanel">
+        <p>${s.prompt}</p>
+        <div class="inputrow">
+          <input type="text" id="input-${i}" placeholder="${s.placeholder}">
+          <button onclick="submitStep(${i})">Check</button>
+        </div>
+        <div class="feedback" id="fb-${i}"></div>
+        <button class="hintbtn" onclick="toggleHint(${i})">Need a hint?</button>
+        <div class="hint" id="hint-${i}">
+          ${s.hint}
+          <br><span class="reveal" onclick="revealAnswer(${i})">Show the answer</span>
+        </div>
+      </div>`;
+    } else {
+      inner += `<div style="font-size:11px;color:var(--muted);margin-left:29px;">🔒 locked until the previous step is solved</div>`;
+    }
+
+    div.innerHTML = inner;
+    el.appendChild(div);
+
+    if(isActive){
+      const input = document.getElementById(`input-${i}`);
+      input.addEventListener('keydown', (e)=>{ if(e.key==="Enter") submitStep(i); });
+    }
+  });
+
+  document.getElementById('progress').textContent = `${solved.filter(Boolean).length} / ${steps.length} confirmed`;
+
+  if(solved.every(x=>x)){
+    const div = document.createElement('div');
+    div.className = "resolution";
+    div.innerHTML = `
+      <h3>Case closed — full chain</h3>
+      <div class="chain">
+        FIN-WKS-014 (Q3_invoice.docm) → T1566.001 Phishing Attachment
+        <br>&nbsp;&nbsp;→ T1059.001 PowerShell (encoded command)
+        <br>&nbsp;&nbsp;→ C2 beacon: cdn-update-check.net
+        <br>&nbsp;&nbsp;→ T1053.005 Scheduled Task persistence (WinUpdateCheck)
+        <br>&nbsp;&nbsp;→ T1003.001 LSASS Memory dump (comsvcs.exe)
+        <br>&nbsp;&nbsp;→ svc-backup account compromised
+        <br>&nbsp;&nbsp;→ T1021.002 Lateral movement to HQ-FILESVR-01 (PsExec)
+        <br>&nbsp;&nbsp;→ T1560 Archive staged (Finance_Q3_Archive.zip)
+        <br>&nbsp;&nbsp;→ T1041 Exfiltration to files-sync-backup.net
+      </div>
+      <p>Recommended containment: isolate FIN-WKS-014 and HQ-FILESVR-01, reset svc-backup credentials,
+      block both external domains, and hunt across the rest of the estate for the same hash or destinations.
+      <br><br>Now transfer this into the <strong>Hunt Worksheet</strong> tab of your spreadsheet.</p>
+    `;
+    el.appendChild(div);
+    document.getElementById('statusBadge').textContent = "CASE CLOSED";
+    document.getElementById('statusBadge').classList.add('closed');
+  } else {
+    document.getElementById('statusBadge').textContent = "INVESTIGATION OPEN";
+    document.getElementById('statusBadge').classList.remove('closed');
+  }
+}
+
+function submitStep(i){
+  const input = document.getElementById(`input-${i}`);
+  const fb = document.getElementById(`fb-${i}`);
+  fb.style.display = "block";
+  if(matches(input.value, steps[i].answer)){
+    steps[i].userAnswer = input.value.trim();
+    solved[i] = true;
+    fb.className = "feedback right";
+    fb.textContent = "Confirmed.";
+    setTimeout(renderStepper, 250);
+  } else {
+    fb.className = "feedback wrong";
+    fb.textContent = "Not quite — check the table again, or use the hint.";
+  }
+}
+
+function toggleHint(i){
+  const h = document.getElementById(`hint-${i}`);
+  h.style.display = h.style.display === "block" ? "none" : "block";
+}
+
+function revealAnswer(i){
+  const input = document.getElementById(`input-${i}`);
+  input.value = steps[i].answer[0];
+}
+
+function resetCase(){
+  solved = new Array(steps.length).fill(false);
+  steps.forEach(s=>{ delete s.userAnswer; });
+  renderStepper();
+}
+
+function renderTable(filter){
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = "";
+  const f = (filter||"").toLowerCase();
+  let shown = 0;
+  rows.forEach(r=>{
+    if(f && !r.some(c => String(c).toLowerCase().includes(f))) return;
+    shown++;
+    const tr = document.createElement('tr');
+    tr.innerHTML = r.map((c,idx)=>{
+      if(idx===7 && c!=="-") return `<td class="hash-cell">${c}</td>`;
+      if(c==="-") return `<td class="dim">-</td>`;
+      return `<td>${c}</td>`;
+    }).join("");
+    tbody.appendChild(tr);
+  });
+  if(shown===0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">No matching events.</td></tr>`;
+  }
+}
+
+document.getElementById('search').addEventListener('input', (e)=> renderTable(e.target.value));
+document.getElementById('rowCount').textContent = rows.length;
+
+renderStepper();
+renderTable("");
+</script>
+</body>
+</html>
