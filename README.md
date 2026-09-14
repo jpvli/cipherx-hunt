@@ -24,7 +24,7 @@ Tools referenced in the workshop, for the external-lead walkthrough and for cont
 
 ### Sandboxes (Dynamic / Behavioral Analysis)
 
-- **[ANY.RUN](https://app.any.run/)** — interactive malware sandbox; the exercise's LummaStealer hash has a public report here. `Freemium` — browsing/searching public reports is free with no account; submitting your own samples needs a free Community account.
+- **[ANY.RUN](https://app.any.run/)** — interactive malware sandbox. `Freemium` — browsing/searching public reports is free with no account; submitting your own samples needs a free Community account.
 - **[Hybrid Analysis](https://hybrid-analysis.com/)** — CrowdStrike Falcon Sandbox's community portal, large public report corpus searchable by hash. `Freemium` — the site is CAPTCHA-gated, so a free account (+ API key) is the practical way in.
 - **[Joe Sandbox](https://www.joesandbox.com/#windows)** — another behavioral sandbox with public/community analysis. `Freemium` — free light lookups, full submissions need an account.
 
@@ -59,15 +59,15 @@ Tools referenced in the workshop, for the external-lead walkthrough and for cont
 
 ### Utilities
 
-- **[Base64 Decode](https://www.base64decode.org/)** — quick base64 decoder; relevant for the exercise's `-enc` PowerShell decoding open item. `Free`, no signup.
+- **[Base64 Decode](https://www.base64decode.org/)** — quick base64 encoder/decoder. `Free`, no signup.
 
 ### Threat Reports & Case Studies
 
-- **[The DFIR Report](https://thedfirreport.com/reports/)** — deep, technical writeups of real intrusions from initial access through impact, often mapped to ATT&CK. Good source for a presenter anecdote or further-reading pointer. `Free`, no signup.
+- **[The DFIR Report](https://thedfirreport.com/reports/)** — deep, technical writeups of real intrusions from initial access through impact, often mapped to ATT&CK. `Free`, no signup.
 
 ### Concepts & Framework References
 
-- **[AttackIQ — Pyramid of Pain](https://www.attackiq.com/glossary/pyramid-of-pain-2/)** — glossary writeup of the Pyramid of Pain model, ties directly to Slide 6. `Free`, no signup.
+- **[AttackIQ — Pyramid of Pain](https://www.attackiq.com/glossary/pyramid-of-pain-2/)** — glossary writeup of the Pyramid of Pain model. `Free`, no signup.
 
 ### Curated Collections
 
