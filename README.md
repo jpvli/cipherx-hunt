@@ -1,5 +1,5 @@
 [README.md](https://github.com/user-attachments/files/32195334/README.md)
-# CipherX 2026 — Why Hunt: From Lead to Hypothesis
+# CipherX 2026: Join The Hunt & Follow The Trail
 
 *Blue Track, Day 1 — presented by John Pavlidis*
 
