@@ -13,7 +13,7 @@ A self-paced, 12-step gated investigation across 6 ATT&CK-mapped phases (Initial
 
 ## Resource Links
 
-Tools referenced in the workshop, for the external-lead (SOCRadar Labs) walkthrough and for continued practice after the session.
+Tools referenced in the workshop, for the external-lead walkthrough and for continued practice after the session.
 
 **Tags:** `Free` = no signup needed for the core use case · `Freemium` = free tier/account unlocks more · `Account required` = you need to register to get useful results
 
