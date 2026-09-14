@@ -75,4 +75,3 @@ Tools referenced in the workshop, for the external-lead walkthrough and for cont
 
 ---
 
-*Still to fold in: ATT&CK / Hunting Maturity Model / PEAK references, the SOCRadar Labs module links used live in Part 2, and CrowdStrike Adversary Universe.*
