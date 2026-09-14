@@ -7,7 +7,7 @@
 
 **[Launch the Internal Hunt Exercise →](https://jpvli.github.io/cipherx-hunt/CipherX-Internal-Hunt-Exercise.html)**
 
-A self-paced, 12-step gated investigation across 6 ATT&CK-mapped phases (Initial Access → Exfiltration). Not a CTF — solve it solo, in a group, or take it home. Hints are available at every step, with a "show the answer" fallback if you get stuck.
+A self-paced, 15-step gated investigation across 6 ATT&CK-mapped phases (Initial Access → Exfiltration). Not a CTF — solve it solo, in a group, or take it home. Hints are available at every step, with a "show the answer" fallback if you get stuck.
 
 ---
 
