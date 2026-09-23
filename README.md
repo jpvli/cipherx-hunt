@@ -5,9 +5,11 @@
 
 ## 🔍 Start the exercise
 
-**[Launch the Internal Hunt Exercise →](https://jpvli.github.io/cipherx-hunt/CipherX-Internal-Hunt-Exercise.html)**
+**[Launch the Internal Hunt Exercise](https://jpvli.github.io/cipherx-hunt/CipherX-Internal-Hunt-Exercise.html)**
 
 A self-paced, 15-step gated investigation across ATT&CK-mapped phases (Initial Access → Exfiltration). Not a CTF — solve it solo, in a group, or take it home. Hints are available at every step, with a "show the answer" fallback if you get stuck.
+
+Need to split the screen? Open the [telemetry logs in a new window](https://jpvli.github.io/cipherx-hunt/CipherX-Internal-Telemetry-Logs.html).
 
 ---
 
