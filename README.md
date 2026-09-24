@@ -75,5 +75,9 @@ Tools referenced in the workshop, for the external-lead walkthrough and for cont
 
 - **[start.me — Cybersecurity](https://start.me/pages/cybersecurity)** — a large curated bookmark board of security tools and resources. `Free`, no signup to view.
 
+### Hunting Maturity Model
+
+- **[HMM Article]([https://start.me/pages/cybersecurity](https://detect-respond.blogspot.com/2015/10/a-simple-hunting-maturity-model.html))** — Full article on Hunting Maturing Model, explaining levels HM0 to HM4.
+
 ---
 
