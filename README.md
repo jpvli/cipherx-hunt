@@ -75,9 +75,9 @@ Tools referenced in the workshop, for the external-lead walkthrough and for cont
 
 - **[start.me — Cybersecurity](https://start.me/pages/cybersecurity)** — a large curated bookmark board of security tools and resources. `Free`, no signup to view.
 
-### Hunting Maturity Model
+### Resources
 
-- **[HMM Article]([https://start.me/pages/cybersecurity](https://detect-respond.blogspot.com/2015/10/a-simple-hunting-maturity-model.html))** — Full article on Hunting Maturing Model, explaining levels HM0 to HM4.
-
+- **[Pyramid of Pain Article](https://detect-respond.blogspot.com/2013/03/the-pyramid-of-pain.html)** — Full article by David Bianco on the Pyramid of Pain.
+- **[HMM Article](https://start.me/pages/cybersecurity](https://detect-respond.blogspot.com/2015/10/a-simple-hunting-maturity-model.html)** — Full article on David Bianco on Hunting Maturing Model, explaining levels HM0 to HM4.
 ---
 
