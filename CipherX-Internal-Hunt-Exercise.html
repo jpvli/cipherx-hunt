@@ -269,8 +269,8 @@ const steps = [
   {phase:"Phase 2 — Execution", key:"malwarefam",
    label:"Which malware family is it tied to?",
    prompt:"Look up that hash. What malware family does it get flagged as?",
-   hint:"Check the detection tags most vendors agree on — that's usually the family name, not a full write-up.",
-   answer:A("purelogsstealer","purelogs stealer","purelogs"),
+   hint:"Different platforms don't always agree on family attribution for the same sample — MalwareBazaar and VirusTotal may show you different names here. Either is a valid answer.",
+   answer:A("purelogsstealer","purelogs stealer","purelogs","agenttesla","agent tesla"),
    placeholder:"malware family name"},
 
   {phase:"Phase 3 — C2 & Persistence", key:"c2",
